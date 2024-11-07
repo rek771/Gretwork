@@ -48,6 +48,7 @@
    # 或
    venv\Scripts\activate  # Windows
 
+   copy .env.example .env
    pip install -r requirements.txt
    ```
 
