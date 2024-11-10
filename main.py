@@ -10,49 +10,49 @@ from core.logger import log, print_banner
 from core.browser import BrowserManager
 from utils.helpers import setup_signal_handlers
 
-# 禁用 TensorFlow 日志
+# Disable TensorFlow logs
 os.environ['TF_CPP_MIN_LOG_LEVEL'] = '3'
 
-# 全局变量
+# Global variables
 running = True
 browser_manager = BrowserManager()
 
 def check_proxy_status(browser):
-    """检查代理连接状态"""
+    """Check the proxy connection status"""
     try:
         browser.get("http://ip-api.com/json")
         WebDriverWait(browser, 10).until(
             lambda driver: driver.execute_script("return document.readyState") == "complete"
         )
-        return True, "代理连接正常"
+        return True, "Proxy connection is normal"
     except Exception as e:
         error_msg = str(e)
         if "ERR_PROXY_CONNECTION_FAILED" in error_msg:
-            return False, "代理连接失败"
+            return False, "Proxy connection failed"
         elif "timeout" in error_msg.lower():
-            return False, "代理连接超时"
+            return False, "Proxy connection timed out"
         else:
-            return False, "代理异常"
+            return False, "Proxy error"
 
 def worker(proxy):
-    """工作线程"""
+    """Worker thread"""
     browser = None
     try:
-        log("启动浏览器实例", "info", proxy)
+        log("Starting browser instance", "info", proxy)
         browser = browser_manager.init_browser(proxy)
         
-        log("开始登录", "info", proxy)
+        log("Starting login", "info", proxy)
         try:
             browser.get("https://app.gradient.network/")
         except Exception as e:
             if running:
                 if "Connection aborted" in str(e) or "Connection reset" in str(e):
-                    log(f"代理 {proxy} 无法访问，请检查代理地址或端口是否正确", "error", proxy)
+                    log(f"Proxy {proxy} cannot access, please check if the proxy address or port is correct", "error", proxy)
                     return
                 raise e
             return
         
-        # 登录流程
+        # Login process
         wait = WebDriverWait(browser, 30)
         email_input = wait.until(EC.presence_of_element_located(
             (By.CSS_SELECTOR, '[placeholder="Enter Email"]')
@@ -68,39 +68,39 @@ def worker(proxy):
         password_input.send_keys(PASSWORD)
         login_button.click()
         
-        # 验证登录成功
+        # Verify login success
         wait.until(EC.presence_of_element_located(
             (By.XPATH, '//*[contains(text(), "Copy Referral Link")]')
         ))
-        log("登录成功", "success", proxy)
+        log("Login successful", "success", proxy)
         
-        # 加载扩展
-        log("正在加载扩展", "info", proxy)
+        # Load extension
+        log("Loading extension", "info", proxy)
         try:
             browser.get(f"chrome-extension://{EXTENSION_ID}/popup.html")
             wait.until(EC.presence_of_element_located(
                 (By.XPATH, '//div[contains(text(), "Status")]')
             ))
-            log("扩展加载成功，开始运行...", "success", proxy)
+            log("Extension loaded successfully, starting to run...", "success", proxy)
         except Exception as e:
             if running:
                 raise e
             return
         
-        # 状态监控
+        # Status monitoring
         while running:
             proxy_ok, proxy_status = check_proxy_status(browser)
             proxy_display = proxy.split('@')[0] if '@' in proxy else proxy
             status_msg = (
                 f"[proxy: {proxy_display}] "
-                f"Browser Status: {'正常运行中' if proxy_ok else '异常'} "
+                f"Browser Status: {'Running normally' if proxy_ok else 'Abnormal'} "
                 f"Proxy Status: {proxy_status}"
             )
             log(status_msg, "status", proxy)
             
-            # 如果代理连接失败，关闭浏览器并退出线程
+            # If the proxy connection fails, close the browser and exit the thread
             if not proxy_ok:
-                log(f"代理 {proxy_display} 连接失败，关闭浏览器实例", "error", proxy)
+                log(f"Proxy {proxy_display} connection failed, closing browser instance", "error", proxy)
                 if browser:
                     browser.quit()
                 return
@@ -110,7 +110,7 @@ def worker(proxy):
     except Exception as e:
         if running:
             proxy_display = proxy.split('@')[0] if '@' in proxy else proxy
-            log(f"代理 {proxy_display} 发生错误，关闭浏览器实例", "error", proxy)
+            log(f"Proxy {proxy_display} encountered an error, closing browser instance", "error", proxy)
     finally:
         if browser:
             try:
@@ -120,20 +120,20 @@ def worker(proxy):
 
 def main():
     try:
-        # 显示启动横幅
+        # Display startup banner
         print_banner()
         
         if not USER or not PASSWORD:
-            log("请设置 APP_USER 和 APP_PASS 环境变量", "error", "system")
+            log("Please set APP_USER and APP_PASS environment variables", "error", "system")
             return
             
-        log(f"启动程序 - 用户: {USER}", "info", "system")
-        log(f"调试模式: {ALLOW_DEBUG}", "info", "system")
+        log(f"Starting the program - User: {USER}", "info", "system")
+        log(f"Debug mode: {ALLOW_DEBUG}", "info", "system")
         
-        # 设置信号处理
+        # Set up signal handling
         setup_signal_handlers(browser_manager)
         
-        # 启动工作线程
+        # Start worker threads
         proxies = os.getenv('PROXY', '').split(',')
         proxies = [p.strip() for p in proxies if p.strip()]
         
@@ -144,14 +144,14 @@ def main():
             threads.append(thread)
             thread.start()
         
-        # 主循环
+        # Main loop
         while running and any(t.is_alive() for t in threads):
             time.sleep(1)
             
     except KeyboardInterrupt:
-        log("程序被用户终止", "info")
+        log("Program terminated by the user", "info")
     except Exception as e:
-        log(f"程序异常: {str(e)}", "error")
+        log(f"Program exception: {str(e)}", "error")
     finally:
         browser_manager.close_all()
 
