@@ -10,14 +10,14 @@ from core.logger import log, print_banner
 from core.browser import BrowserManager
 from utils.helpers import setup_signal_handlers
 
-# ... 其余代码保持不变 ...
+# ... other code remains unchanged ...
 
-        # 加载扩展
-        log("正在加载扩展", "info", proxy)
+        # Load the extension
+        log("Loading the extension", "info", proxy)
         browser.get(f"chrome-extension://{EXTENSION_ID}/popup.html")
         wait.until(EC.presence_of_element_located(
             (By.XPATH, '//div[contains(text(), "Status")]')
         ))
-        log("扩展加载成功", "success", proxy)
+        log("Extension loaded successfully", "success", proxy)
 
-# ... 后面的代码保持不变 ... 
+# ... the rest of the code remains unchanged ...

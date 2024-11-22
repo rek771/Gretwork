@@ -1,11 +1,11 @@
 from datetime import datetime
 from colorama import Fore, Style, init
 
-# 初始化colorama
+# Initialize colorama
 init(autoreset=True)
 
 def print_banner():
-    """打印启动横幅"""
+    """Print the startup banner"""
     banner = f"""
 {Fore.CYAN}
    ____               _ _            _     _   _      _                      _    ____        _   
@@ -21,7 +21,7 @@ def print_banner():
     print(banner)
 
 def log(message, level="info", proxy=None):
-    """统一的日志输出格式"""
+    """Unified log output format"""
     timestamp = datetime.now().strftime("%H:%M:%S")
     
     if level == "info":
@@ -31,14 +31,14 @@ def log(message, level="info", proxy=None):
     elif level == "success":
         print(f"{Fore.WHITE}{timestamp} {Fore.CYAN}[{proxy}] {Fore.YELLOW}SUCCESS: {Style.RESET_ALL}{message}")
     elif level == "status":
-        # 使用不同颜色来区分状态信息的不同部分
+        # Use different colors to distinguish different parts of status information
         proxy_part = f"[proxy: {message.split(']')[0].split(': ')[1]}]"
         browser_label = "Browser Status:"
-        browser_value = "正常运行中" if "正常运行中" in message else "异常"
+        browser_value = "Running normally" if "正常运行中" in message else "Abnormal"
         proxy_label = "Proxy Status:"
         proxy_value = message.split("Proxy Status: ")[1]
         
-        if "代理连接正常" in message:
+        if "Proxy connection normal" in message:
             print(
                 f"{Fore.WHITE}{timestamp} "
                 f"{Fore.CYAN}{proxy_part} "
